@@ -22,15 +22,13 @@ def get_edits_for_instruction(code: str, instruction: str) -> str:
     temperature=0.1,
     top_p=1.0,
   )
-  code = response["choices"][0]["text"]
-  return code
+  return response["choices"][0]["text"]
 
 
 def edit_file(file: Union[str, Path], instruction: str) -> bool:
   if isinstance(file, str):
     file = Path(file)
-  with open(file) as fob:
-    file_contents = fob.read()
+  file_contents = Path(file).read_text()
   is_modified = False
   modified_code = get_edits_for_instruction(file_contents, instruction)
 
@@ -49,7 +47,7 @@ def display_diff(repo: Repo, file: Path) -> None:
 
 
 def generate_summary(prompt: str) -> str:
-  prompt = 'Generate a pull request branch name, commit message, pr heading and pr body for instruction:' + prompt
+  prompt = f'Generate a pull request branch name, commit message, pr heading and pr body for instruction:{prompt}'
   response = openai.Completion.create(
     model="text-davinci-003",
     prompt=prompt,
@@ -68,15 +66,19 @@ def get_meta_info(instruction: str) -> Dict[str, str]:
   summary_list = [x.split(":")[-1].strip() for x in summary.split("\n")]
 
   if len(summary_list) != 4:
-    summary_list = ['new-edit-branch', 'add edit based on instruction', 'Instruction based edit', "Instruction: " + instruction]
+    summary_list = [
+        'new-edit-branch',
+        'add edit based on instruction',
+        'Instruction based edit',
+        f"Instruction: {instruction}",
+    ]
 
-  res = {
-    "branch": f"{summary_list[0]}-{random.randint(0, 1000)}",
-    "commit_message": summary_list[1],
-    "pr_title": summary_list[2],
-    "pr_body": summary_list[3],
+  return {
+      "branch": f"{summary_list[0]}-{random.randint(0, 1000)}",
+      "commit_message": summary_list[1],
+      "pr_title": summary_list[2],
+      "pr_body": summary_list[3],
   }
-  return res
 
 
 if __name__ == "__main__":
